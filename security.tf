@@ -2,14 +2,14 @@
 #  SECURITY GROUPS
 #  Stateful traffic filtering at instance level.
 #  Mirrors Nokia 5G network function access
-#  control — each NF only accepts traffic
+#  control - each NF only accepts traffic
 #  from its defined peers (AMF ↔ SMF ↔ UPF)
 # ─────────────────────────────────────────────
 
-# Web tier — public-facing (ALB / bastion)
+# Web tier - public-facing (ALB / bastion)
 resource "aws_security_group" "web" {
   name        = "${var.project_name}-web-sg"
-  description = "Public-facing web tier — HTTP, HTTPS, SSH from allowed CIDR"
+  description = "Public-facing web tier - HTTP, HTTPS, SSH from allowed CIDR"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -50,10 +50,10 @@ resource "aws_security_group" "web" {
   }
 }
 
-# App tier — private subnet, accepts traffic from web SG only
+# App tier - private subnet, accepts traffic from web SG only
 resource "aws_security_group" "app" {
   name        = "${var.project_name}-app-sg"
-  description = "App tier — accepts traffic from web SG on port 8080"
+  description = "App tier - accepts traffic from web SG on port 8080"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -86,10 +86,10 @@ resource "aws_security_group" "app" {
   }
 }
 
-# DB tier — private subnet, accepts traffic from app SG only
+# DB tier - private subnet, accepts traffic from app SG only
 resource "aws_security_group" "db" {
   name        = "${var.project_name}-db-sg"
-  description = "DB tier — accepts MySQL/Postgres from app SG only"
+  description = "DB tier - accepts MySQL/Postgres from app SG only"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -125,7 +125,7 @@ resource "aws_security_group" "db" {
 # ─────────────────────────────────────────────
 #  NETWORK ACLs
 #  Stateless filtering at subnet level.
-#  Second layer of defence — mirrors Nokia
+#  Second layer of defence - mirrors Nokia
 #  transport network security policies applied
 #  at the network function boundary level
 # ─────────────────────────────────────────────
@@ -163,7 +163,7 @@ resource "aws_network_acl" "public" {
     to_port    = 22
   }
 
-  # Ephemeral ports — required for return traffic
+  # Ephemeral ports - required for return traffic
   ingress {
     rule_no    = 130
     protocol   = "tcp"
@@ -173,7 +173,7 @@ resource "aws_network_acl" "public" {
     to_port    = 65535
   }
 
-  # Outbound rules — allow all
+  # Outbound rules - allow all
   egress {
     rule_no    = 100
     protocol   = "-1"
@@ -188,7 +188,7 @@ resource "aws_network_acl" "public" {
   }
 }
 
-# Private subnet NACL — more restrictive
+# Private subnet NACL - more restrictive
 resource "aws_network_acl" "private" {
   vpc_id     = aws_vpc.main.id
   subnet_ids = aws_subnet.private[*].id
