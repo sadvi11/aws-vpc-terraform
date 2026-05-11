@@ -1,0 +1,36 @@
+# Terraform state files — never commit these
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Terraform plan files
+*.tfplan
+
+# Terraform lock file (commit this in team projects)
+# .terraform.lock.hcl
+
+# Terraform working directory
+.terraform/
+.terraform.lock.hcl
+
+# Sensitive variable files — create terraform.tfvars locally
+# terraform.tfvars  # uncomment if your tfvars contain secrets
+*.auto.tfvars
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Environment files
+.env
+.env.*
