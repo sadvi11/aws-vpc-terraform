@@ -260,3 +260,9 @@ Building a hands-on cloud portfolio aligned with Canadian tech market requiremen
 Calgary, AB, Canada — Permanent Resident — Open to Relocation
 
 [LinkedIn](https://linkedin.com/in/sadhvi-sharma-5789a6249) | [GitHub](https://github.com/sadvi11) | [Portfolio](https://github.com/sadvi11/smart-ai-agent)
+
+## Cost Estimate
+- NAT Gateway: ~$0.045/hr when running
+- EC2 t2.micro: Free tier eligible
+- VPC: Free
+- Always delete NAT Gateway after testing
