@@ -266,3 +266,50 @@ Calgary, AB, Canada — Permanent Resident — Open to Relocation
 - EC2 t2.micro: Free tier eligible
 - VPC: Free
 - Always delete NAT Gateway after testing
+
+## Architecture
+
+```mermaid
+flowchart TD
+    Internet([Internet])
+    IGW[Internet Gateway]
+    Internet <--> IGW
+
+    subgraph VPC["VPC 10.0.0.0/16 (ca-central-1)"]
+        direction TB
+
+        subgraph AZ1["AZ ca-central-1a"]
+            PubSub1["Public Subnet 1<br/>10.0.1.0/24"]
+            NAT["NAT Gateway + EIP"]
+            PrivSub1["Private Subnet 1<br/>10.0.10.0/24"]
+        end
+
+        subgraph AZ2["AZ ca-central-1b"]
+            PubSub2["Public Subnet 2<br/>10.0.2.0/24"]
+            PrivSub2["Private Subnet 2<br/>10.0.11.0/24"]
+        end
+
+        PubRT["Public Route Table<br/>0.0.0.0/0 to IGW"]
+        PrivRT["Private Route Table<br/>0.0.0.0/0 to NAT"]
+        SG["Default Security Group<br/>LOCKED - deny all"]
+        Flow["VPC Flow Logs to CloudWatch"]
+    end
+
+    IGW --> PubSub1
+    IGW --> PubSub2
+    PubSub1 -.- PubRT
+    PubSub2 -.- PubRT
+    PrivSub1 -->|outbound| NAT
+    PrivSub2 -->|outbound| NAT
+    NAT --> IGW
+    PrivSub1 -.- PrivRT
+    PrivSub2 -.- PrivRT
+    VPC -.audited.-> Flow
+
+    classDef public fill:#1f6feb,stroke:#58a6ff,color:#fff;
+    classDef private fill:#238636,stroke:#3fb950,color:#fff;
+    classDef security fill:#8957e5,stroke:#a371f7,color:#fff;
+    class PubSub1,PubSub2 public;
+    class PrivSub1,PrivSub2 private;
+    class SG,Flow security;
+```
