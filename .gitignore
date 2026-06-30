@@ -34,3 +34,4 @@ crash.*.log
 # Environment files
 .env
 .env.*
+aws-vpc-terraform/
