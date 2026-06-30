@@ -8,6 +8,6 @@ private_subnet_cidrs = ["10.0.10.0/24", "10.0.11.0/24"]
 availability_zones   = ["ca-central-1a", "ca-central-1b"]
 
 # Replace YOUR_IP with: curl ifconfig.me
-allowed_ssh_cidr = "YOUR_IP/32"
+allowed_ssh_cidr = "1.2.3.4/32"
 
 enable_flow_logs = false
