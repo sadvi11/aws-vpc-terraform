@@ -14,7 +14,7 @@
 .terraform.lock.hcl
 
 # Sensitive variable files — create terraform.tfvars locally
-# terraform.tfvars  # uncomment if your tfvars contain secrets
+terraform.tfvars
 *.auto.tfvars
 
 # OS files

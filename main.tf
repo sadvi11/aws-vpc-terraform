@@ -21,11 +21,6 @@ provider "aws" {
   }
 }
 
-# ─────────────────────────────────────────────
-#  VPC
-#  Mirrors the 5G Packet Core boundary —
-#  isolated network domain for all functions
-# ─────────────────────────────────────────────
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
@@ -36,11 +31,6 @@ resource "aws_vpc" "main" {
   }
 }
 
-# ─────────────────────────────────────────────
-#  Internet Gateway
-#  Entry point from the public internet —
-#  mirrors the N1/N2 interface in 5G (RAN ↔ Core)
-# ─────────────────────────────────────────────
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
@@ -49,12 +39,6 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
-# ─────────────────────────────────────────────
-#  PUBLIC SUBNETS — 2 Availability Zones
-#  External-facing tier, analogous to the
-#  User Plane Function (UPF) N6 interface
-#  in 5G — where external traffic enters
-# ─────────────────────────────────────────────
 resource "aws_subnet" "public" {
   count                   = length(var.public_subnet_cidrs)
   vpc_id                  = aws_vpc.main.id
@@ -68,12 +52,6 @@ resource "aws_subnet" "public" {
   }
 }
 
-# ─────────────────────────────────────────────
-#  PRIVATE SUBNETS — 2 Availability Zones
-#  Internal-facing tier, analogous to the
-#  Control Plane (AMF/SMF) in 5G —
-#  no direct public access, protected core
-# ─────────────────────────────────────────────
 resource "aws_subnet" "private" {
   count             = length(var.private_subnet_cidrs)
   vpc_id            = aws_vpc.main.id
@@ -86,9 +64,6 @@ resource "aws_subnet" "private" {
   }
 }
 
-# ─────────────────────────────────────────────
-#  ELASTIC IP for NAT Gateway
-# ─────────────────────────────────────────────
 resource "aws_eip" "nat" {
   domain = "vpc"
 
@@ -99,14 +74,6 @@ resource "aws_eip" "nat" {
   depends_on = [aws_internet_gateway.main]
 }
 
-# ─────────────────────────────────────────────
-#  NAT GATEWAY — deployed in public subnet AZ1
-#  Enables private subnet instances to reach
-#  the internet without being directly exposed.
-#  Mirrors the SMF session management function
-#  in 5G — manages outbound sessions, shields
-#  the core from direct external connectivity
-# ─────────────────────────────────────────────
 resource "aws_nat_gateway" "main" {
   allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.public[0].id
@@ -118,11 +85,6 @@ resource "aws_nat_gateway" "main" {
   depends_on = [aws_internet_gateway.main]
 }
 
-# ─────────────────────────────────────────────
-#  ROUTE TABLES
-# ─────────────────────────────────────────────
-
-# Public route table — routes all traffic to IGW
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -136,7 +98,6 @@ resource "aws_route_table" "public" {
   }
 }
 
-# Private route table — routes outbound traffic through NAT
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
@@ -150,9 +111,6 @@ resource "aws_route_table" "private" {
   }
 }
 
-# ─────────────────────────────────────────────
-#  ROUTE TABLE ASSOCIATIONS
-# ─────────────────────────────────────────────
 resource "aws_route_table_association" "public" {
   count          = length(aws_subnet.public)
   subnet_id      = aws_subnet.public[count.index].id
@@ -164,3 +122,14 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
 }
+
+# DEFAULT SECURITY GROUP — LOCKED DOWN (deny-all)
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.project_name}-default-sg-locked"
+  }
+}
+
+# NOTE: VPC Flow Logs and IAM roles are defined in iam.tf
