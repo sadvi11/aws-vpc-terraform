@@ -216,12 +216,10 @@ Infrastructure was deployed and verified on AWS `ca-central-1` (Canada Central).
 
 ---
 
-## Interview Talking Points
+## Design Decisions
 
-This project was built specifically to demonstrate cloud networking skills for
-cloud engineer and DevOps engineer roles in the Canadian market.
 
-**Key concepts demonstrated:**
+**The decisions behind it:**
 
 - **VPC design** — public/private subnet segregation with real business rationale
 - **High availability** — multi-AZ deployment prevents single AZ failure impact
