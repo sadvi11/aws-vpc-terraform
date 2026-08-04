@@ -1,12 +1,24 @@
 # AWS VPC Network Architecture — Terraform IaC
 
-> Production-grade AWS cloud network infrastructure provisioned entirely with Terraform.  
-> Architecture modelled on Nokia 5G Packet Core network segmentation principles.
+**A production multi-tier VPC in one command, destroyed in one command — network segmentation modelled on 5G packet core design.**
 
-[![Terraform](https://img.shields.io/badge/Terraform-1.3%2B-7B42BC?logo=terraform)](https://www.terraform.io)
-[![AWS](https://img.shields.io/badge/AWS-ca--central--1-FF9900?logo=amazonaws)](https://aws.amazon.com)
-[![Status](https://img.shields.io/badge/Status-Deployed%20%26%20Verified-2ea44f)]()
-[![IaC](https://img.shields.io/badge/Infrastructure-as--Code-blue)]()
+[![Terraform CI](https://github.com/sadvi11/aws-vpc-terraform/actions/workflows/terraform.yml/badge.svg)](https://github.com/sadvi11/aws-vpc-terraform/actions/workflows/terraform.yml)
+[![Terraform](https://img.shields.io/badge/Terraform-1.3%2B-7B42BC?logo=terraform&logoColor=white)](https://terraform.io)
+[![AWS](https://img.shields.io/badge/AWS-ca--central--1-FF9900?logo=amazonaws&logoColor=white)](https://aws.amazon.com)
+
+<!-- DEMO SLOT — replace this comment with the demo GIF once recorded:
+     ![Demo](docs/demo.gif)
+     Should show (~30s): terraform apply → the AWS console showing the VPC topology
+     across both AZs → terraform destroy completing cleanly. The destroy is the point:
+     it demonstrates cost discipline, which is what separates this from a tutorial. -->
+
+| | |
+|---|---|
+| **Stack** | Terraform · VPC · NAT Gateway · IGW · Security Groups · NACLs · IAM |
+| **Topology** | Public/private subnets across 2 AZs, three-tier security groups, least-privilege roles |
+| **Reproducible** | Every resource in code — `apply` builds it, `destroy` removes it cleanly |
+
+---
 
 ---
 
