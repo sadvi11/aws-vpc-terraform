@@ -1,5 +1,7 @@
 # AWS VPC Network Architecture — Terraform IaC
 
+[![Terraform](https://github.com/sadvi11/aws-vpc-terraform/actions/workflows/terraform.yml/badge.svg)](https://github.com/sadvi11/aws-vpc-terraform/actions/workflows/terraform.yml)
+
 > Production-grade AWS cloud network infrastructure provisioned entirely with Terraform.  
 > Architecture modelled on Nokia 5G Packet Core network segmentation principles.
 
