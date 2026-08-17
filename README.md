@@ -199,22 +199,32 @@ enable_flow_logs = true              # enables CloudWatch network audit
 
 ## Deployment Proof
 
-Infrastructure was deployed and verified on AWS `ca-central-1` (Canada Central).
+Infrastructure was deployed and verified on AWS `ca-central-1` (Canada Central) —
+22 resources, then destroyed, because a VPC with a NAT gateway costs about
+$32/month to leave running.
 
-### Apply Complete — 22 Resources Deployed
-![terraform apply](screenshots/terraform-apply.png)
+![VPC deployed in the AWS console](screenshots/vpc-deployed.png)
 
-### VPC Live in AWS Console
-![AWS VPC Console](screenshots/aws-console-vpc.png)
+### Verified on every commit, without an AWS account
 
-### Public and Private Subnets — Multi-AZ
-![Subnets](screenshots/aws-console-subnets.png)
+The console screenshot above is a moment in time. What is re-checked
+continuously is the configuration itself — real output from the
+[latest CI run](https://github.com/sadvi11/aws-vpc-terraform/actions):
 
-### Three-Tier Security Groups
-![Security Groups](screenshots/aws-console-security-groups.png)
+```console
+$ terraform init
+Terraform has been successfully initialized!
 
-### NAT Gateway — Public Subnet
-![NAT Gateway](screenshots/aws-console-nat-gateway.png)
+$ terraform fmt -check
+$ terraform validate
+Success! The configuration is valid.
+```
+
+Validation runs with no backend and no credentials, which is as far as an
+honest check goes without an account: it proves the configuration is
+internally correct and formatted. **It does not prove the infrastructure
+builds** — only an apply against a real account does that, and that is what
+the screenshot above records.
 
 ---
 
