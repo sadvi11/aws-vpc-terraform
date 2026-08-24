@@ -281,27 +281,27 @@ Calgary, AB, Canada — Permanent Resident — Open to Relocation
 
 ```mermaid
 flowchart TD
-    Internet([Internet])
-    IGW[Internet Gateway]
+    Internet(["Internet"])
+    IGW["Internet Gateway"]
     Internet <--> IGW
 
-    subgraph VPC["VPC 10.0.0.0/16 (ca-central-1)"]
+    subgraph VPC["VPC 10.0.0.0/16 · ca-central-1"]
         direction TB
 
         subgraph AZ1["AZ ca-central-1a"]
-            PubSub1["Public Subnet 1<br/>10.0.1.0/24"]
+            PubSub1["Public subnet 1<br/>10.0.1.0/24"]
             NAT["NAT Gateway + EIP"]
-            PrivSub1["Private Subnet 1<br/>10.0.10.0/24"]
+            PrivSub1["Private subnet 1<br/>10.0.10.0/24"]
         end
 
         subgraph AZ2["AZ ca-central-1b"]
-            PubSub2["Public Subnet 2<br/>10.0.2.0/24"]
-            PrivSub2["Private Subnet 2<br/>10.0.11.0/24"]
+            PubSub2["Public subnet 2<br/>10.0.2.0/24"]
+            PrivSub2["Private subnet 2<br/>10.0.11.0/24"]
         end
 
-        PubRT["Public Route Table<br/>0.0.0.0/0 to IGW"]
-        PrivRT["Private Route Table<br/>0.0.0.0/0 to NAT"]
-        SG["Default Security Group<br/>LOCKED - deny all"]
+        PubRT["Public route table<br/>0.0.0.0/0 to IGW"]
+        PrivRT["Private route table<br/>0.0.0.0/0 to NAT"]
+        SG["Default security group<br/><b>LOCKED — deny all</b>"]
         Flow["VPC Flow Logs to CloudWatch"]
     end
 
@@ -309,19 +309,26 @@ flowchart TD
     IGW --> PubSub2
     PubSub1 -.- PubRT
     PubSub2 -.- PubRT
-    PrivSub1 -->|outbound| NAT
-    PrivSub2 -->|outbound| NAT
+    PrivSub1 -->|"outbound"| NAT
+    PrivSub2 -->|"outbound"| NAT
     NAT --> IGW
     PrivSub1 -.- PrivRT
     PrivSub2 -.- PrivRT
     VPC -.audited.-> Flow
 
-    classDef public fill:#1f6feb,stroke:#58a6ff,color:#fff;
-    classDef private fill:#238636,stroke:#3fb950,color:#fff;
-    classDef security fill:#8957e5,stroke:#a371f7,color:#fff;
-    class PubSub1,PubSub2 public;
-    class PrivSub1,PrivSub2 private;
-    class SG,Flow security;
+    linkStyle default stroke:#64748b,stroke-width:1.5px
+    classDef default fill:#f8fafc,stroke:#64748b,stroke-width:2px,color:#0f172a
+    classDef aws   fill:#fff7ed,stroke:#c2410c,stroke-width:3px,color:#7c2d12
+    classDef ci    fill:#f5f3ff,stroke:#6d28d9,stroke-width:3px,color:#4c1d95
+    classDef ok    fill:#dcfce7,stroke:#15803d,stroke-width:3px,color:#14532d
+    classDef warn  fill:#fef3c7,stroke:#b45309,stroke-width:3px,color:#78350f
+    class PubSub1,PubSub2 aws
+    class PrivSub1,PrivSub2 ok
+    class SG,Flow warn
+    class IGW,NAT ci
+    style VPC fill:#f1f5f9,stroke:#475569,stroke-width:2px,color:#0f172a
+    style AZ1 fill:#f1f5f9,stroke:#475569,stroke-width:2px,color:#0f172a
+    style AZ2 fill:#f1f5f9,stroke:#475569,stroke-width:2px,color:#0f172a
 ```
 
 ## Deployment Proof
