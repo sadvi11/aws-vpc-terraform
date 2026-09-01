@@ -12,9 +12,8 @@ suite, restores the file, and fails if the suite stayed green.
 
 Needs terraform and no AWS account.
 """
-import json
+import os
 import pathlib
-import shutil
 import subprocess
 import sys
 
@@ -100,7 +99,12 @@ FAULTS = [
 
 def plan():
     """Re-plan and refresh plan.json. Returns True on success."""
-    env = {"PATH": "/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin",
+    # Inherit the environment and override only the AWS variables. An earlier
+    # version built env from scratch with a hardcoded PATH, which found
+    # terraform in /opt/homebrew/bin on a Mac and nowhere at all on a CI
+    # runner - so it passed locally and failed in CI, which is the wrong way
+    # round for a check whose whole claim is that it needs no local setup.
+    env = {**os.environ,
            "AWS_SHARED_CREDENTIALS_FILE": "/dev/null",
            "AWS_CONFIG_FILE": "/dev/null",
            "AWS_EC2_METADATA_DISABLED": "true"}
