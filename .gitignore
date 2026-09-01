@@ -35,3 +35,14 @@ crash.*.log
 .env
 .env.*
 aws-vpc-terraform/
+
+# Plan artefacts. tests/plan regenerates these on every run; a committed plan
+# is a stale claim about a configuration that has since changed.
+tfplan
+plan.json
+.terraform.lock.hcl
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/

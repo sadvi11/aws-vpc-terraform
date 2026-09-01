@@ -173,7 +173,7 @@ terraform init
 # Preview — no changes made
 terraform plan
 
-# Deploy — builds all 22 resources (~3 minutes)
+# Deploy — builds 26 resources, or 30 with flow logs enabled (~3 minutes)
 terraform apply
 
 # View all resource IDs
@@ -191,7 +191,7 @@ Edit `terraform.tfvars` before deploying:
 aws_region       = "ca-central-1"   # change to your region
 project_name     = "5g-core-vpc"
 environment      = "dev"
-allowed_ssh_cidr = "YOUR_IP/32"     # curl ifconfig.me to find your IP
+allowed_ssh_cidr = "203.0.113.4/32" # your own address as a /32; curl ifconfig.me
 enable_flow_logs = true              # enables CloudWatch network audit
 ```
 
@@ -200,7 +200,7 @@ enable_flow_logs = true              # enables CloudWatch network audit
 ## Deployment Proof
 
 Infrastructure was deployed and verified on AWS `ca-central-1` (Canada Central) —
-22 resources, then destroyed, because a VPC with a NAT gateway costs about
+26 resources, then destroyed, because a VPC with a NAT gateway costs about
 $32/month to leave running.
 
 ![VPC deployed in the AWS console](screenshots/vpc-deployed.png)
@@ -208,30 +208,87 @@ $32/month to leave running.
 ### Verified on every commit, without an AWS account
 
 The console screenshot above is a moment in time. What is re-checked
-continuously is the configuration itself — real output from the
-[latest CI run](https://github.com/sadvi11/aws-vpc-terraform/actions):
+continuously is the configuration itself.
+
+This section used to say that `fmt` and `validate` were "as far as an honest
+check goes without an account". That was wrong, and it was hiding a real
+defect. Both commands pass on a VPC that puts the database on the public
+internet — valid HCL and a safe design are different questions, and only the
+first was being asked.
+
+CI now plans the real configuration through a provider that skips credential
+validation, then asserts the security properties this README claims:
 
 ```console
-$ terraform init
-Terraform has been successfully initialized!
-
-$ terraform fmt -check
-$ terraform validate
-Success! The configuration is valid.
+$ pytest tests/test_vpc_security.py -q
+................                                          16 passed
 ```
 
-Validation runs with no backend and no credentials, which is as far as an
-honest check goes without an account: it proves the configuration is
-internally correct and formatted. **It does not prove the infrastructure
-builds** — only an apply against a real account does that, and that is what
-the screenshot above records.
+Most of them assert **negatives**, because a negative is the thing that
+silently stops being true:
+
+| Asserted | Why it is the interesting direction |
+|---|---|
+| The database accepts no CIDR ingress at all | Only ever reachable from the app tier's security group |
+| The web tier cannot reach the database | Web-straight-to-database is the shortcut that collapses three tiers into two |
+| No security group opens port 22 to `0.0.0.0/0` | See the defect below |
+| Private subnets have no route to the internet gateway | A private subnet with an IGW route is public, whatever it is named |
+| The default security group has no rules at all | It cannot be deleted, so anything launched without an explicit group lands in it |
+| Every subnet is associated with a route table | An unassociated subnet silently falls back to the main one |
+
+### The defect this found
+
+`allowed_ssh_cidr` **defaulted to `0.0.0.0/0`**. Any plan that did not set the
+variable opened port 22 to the entire internet — while this README described
+the SSH rule as restricted. A security default that fails open is worse than
+no default, because it is a promise the configuration does not keep.
+
+The default is gone, so Terraform now refuses to plan until the value is
+supplied, and a validation rule rejects `0.0.0.0/0` outright:
+
+```console
+$ terraform plan -var 'allowed_ssh_cidr=0.0.0.0/0'
+Error: Invalid value for variable
+  allowed_ssh_cidr must not be 0.0.0.0/0. Port 22 open to the internet is the
+  single most exploited misconfiguration in a public VPC.
+```
+
+### The tests are proven able to fail
+
+Sixteen passing tests are not evidence until they have been shown to fail.
+[`tests/verify_controls_fail.py`](tests/verify_controls_fail.py) breaks each
+control on purpose, re-plans, and fails the build if the suite stays green:
+
+```console
+ok    caught: the database accepts MySQL from the entire internet
+ok    caught: port 22 is open to the world
+ok    caught: the web tier reaches the database directly, skipping the app tier
+ok    caught: the private subnets route straight to the internet gateway
+ok    caught: the default security group permits traffic again
+
+All 5 controls are load-bearing.
+```
+
+Run any of it yourself — none of it needs an AWS account or creates a billable
+resource:
+
+```bash
+cd tests/plan
+terraform init -backend=false
+terraform plan -refresh=false -var-file=plan.tfvars -out=tfplan
+terraform show -json tfplan > plan.json
+cd ../.. && pytest tests/test_vpc_security.py -v
+python tests/verify_controls_fail.py
+```
+
+**What this does not prove:** that the infrastructure builds. A plan shows
+configuration, not behaviour, and these assert routing and rule *intent*
+rather than sending packets. Only an apply against a real account proves it
+builds — which is what the screenshot above records.
 
 ---
 
-## Design Decisions
-
-
-**The decisions behind it:**
+## What this project demonstrates
 
 - **VPC design** — public/private subnet segregation with real business rationale
 - **High availability** — multi-AZ deployment prevents single AZ failure impact
@@ -248,13 +305,20 @@ the screenshot above records.
 
 ```
 aws-vpc-terraform/
-├── main.tf           # VPC, subnets, IGW, NAT Gateway, route tables
-├── security.tf       # Security Groups (web/app/db) and Network ACLs
-├── iam.tf            # IAM roles, instance profiles, VPC Flow Logs
-├── variables.tf      # All input variables with validation
-├── outputs.tf        # Exports key resource IDs for downstream use
-├── terraform.tfvars  # Environment-specific values
-├── screenshots/      # Deployment proof screenshots
+├── main.tf                     # VPC, subnets, IGW, NAT Gateway, route tables
+├── security.tf                 # Security groups (web/app/db) and network ACLs
+├── iam.tf                      # IAM roles, instance profiles, VPC flow logs
+├── variables.tf                # Input variables, with validation that refuses
+│                               #   an SSH rule open to 0.0.0.0/0
+├── outputs.tf                  # Exports key resource IDs for downstream use
+├── terraform.tfvars            # Environment-specific values
+├── tests/
+│   ├── test_vpc_security.py    # 16 assertions, mostly negatives
+│   ├── verify_controls_fail.py # Breaks each control to prove the tests fail
+│   └── plan/                   # Plan-only harness: the root .tf files are
+│       ├── provider_override.tf#   symlinked in, and the provider skips
+│       └── plan.tfvars         #   credential validation, so no AWS account
+├── screenshots/                # Deployment proof screenshots
 └── README.md
 ```
 
@@ -277,7 +341,7 @@ Calgary, AB, Canada — Permanent Resident — Open to Relocation
 - VPC: Free
 - Always delete NAT Gateway after testing
 
-## Architecture
+## Architecture diagram
 
 ```mermaid
 flowchart TD
@@ -330,7 +394,3 @@ flowchart TD
     style AZ1 fill:#f1f5f9,stroke:#475569,stroke-width:2px,color:#0f172a
     style AZ2 fill:#f1f5f9,stroke:#475569,stroke-width:2px,color:#0f172a
 ```
-
-## Deployment Proof
-
-![VPC Deployment](screenshots/vpc-deployed.png)

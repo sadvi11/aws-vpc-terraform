@@ -51,9 +51,25 @@ variable "availability_zones" {
 }
 
 variable "allowed_ssh_cidr" {
-  description = "CIDR block allowed to SSH into bastion host (your IP)"
+  description = "CIDR block allowed to SSH into the bastion host - a single address, e.g. 203.0.113.4/32"
   type        = string
-  default     = "0.0.0.0/0"
+
+  # No default, on purpose. This previously defaulted to "0.0.0.0/0", so a
+  # plan that simply omitted the variable opened port 22 to the entire
+  # internet - while the README described the SSH rule as restricted. A
+  # security default that fails open is worse than no default: it is a
+  # promise the configuration does not keep. With no default, Terraform
+  # refuses to plan until the value is supplied.
+
+  validation {
+    condition     = var.allowed_ssh_cidr != "0.0.0.0/0"
+    error_message = "allowed_ssh_cidr must not be 0.0.0.0/0. Port 22 open to the internet is the single most exploited misconfiguration in a public VPC; pass your own address as a /32."
+  }
+
+  validation {
+    condition     = can(cidrnetmask(var.allowed_ssh_cidr))
+    error_message = "allowed_ssh_cidr must be a valid IPv4 CIDR block, e.g. 203.0.113.4/32."
+  }
 }
 
 variable "enable_flow_logs" {
