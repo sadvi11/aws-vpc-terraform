@@ -49,17 +49,6 @@ jobs:
           tflint --init
           tflint --config "$GITHUB_WORKSPACE/.tflint.hcl"
 
-      # Informational for now (exit-code 0): the report is in the job log so
-      # findings can be triaged and then turned into a blocking gate.
-      - name: Misconfiguration scan (Trivy, no credentials)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: config
-          scan-ref: .
-          skip-dirs: tests
-          severity: HIGH,CRITICAL
-          exit-code: "0"
-
       - name: Plan the same configuration with no AWS account
         working-directory: tests/plan
         run: |

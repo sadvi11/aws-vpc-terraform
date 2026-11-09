@@ -355,7 +355,7 @@ This is a lab-scale network. For a production workload I would:
 - **Tighten the NACL ephemeral-port rules** ([ADR 002](docs/adr/002-security-groups-and-nacls.md)).
 - **Enable flow logs by default** and encrypt the log group with a KMS key.
 - **Remote state** with locking, and separate state per environment.
-- **Triage the Trivy report** in CI and make it a blocking gate.
+- **Add a misconfiguration scan** (Trivy or Checkov) to CI as a blocking gate.
 
 ## Architecture decisions
 

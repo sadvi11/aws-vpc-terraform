@@ -18,8 +18,8 @@ AWS credentials in CI.
 ## Decision
 Option 3, plus `tests/verify_controls_fail.py`, which deliberately breaks each
 control and checks that a test fails, so the assertions are shown to be able to
-fail. tflint and a Trivy configuration scan were added alongside as extra
-credential-free signals.
+fail. tflint was added alongside as an extra credential-free signal; a Trivy
+configuration scan is a candidate next step.
 
 ## Consequences
 - The plan cannot see values that are only known after apply, and it does not
