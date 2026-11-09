@@ -335,11 +335,33 @@ Calgary, AB, Canada — Permanent Resident — Open to Relocation
 
 [LinkedIn](https://linkedin.com/in/sadhvi-sharma-5789a6249) | [GitHub](https://github.com/sadvi11) | [Portfolio](https://github.com/sadvi11/smart-ai-agent)
 
-## Cost Estimate
-- NAT Gateway: ~$0.045/hr when running
-- EC2 t2.micro: Free tier eligible
-- VPC: Free
-- Always delete NAT Gateway after testing
+## Cost notes
+
+I have not measured a bill for this project, so no dollar figures are given here.
+What drives cost, per the [Amazon VPC pricing page](https://aws.amazon.com/vpc/pricing/):
+
+- **NAT gateway** - an hourly charge while it exists, plus a per-GB data-processing charge. This is the main running cost; destroy the stack after testing.
+- **Public IPv4 addresses** - the NAT gateway's Elastic IP is a public IPv4 address, which is charged hourly.
+- **VPC, subnets, route tables, security groups, NACLs, internet gateway** - no charge of their own.
+- **Flow logs** (optional) - CloudWatch Logs ingestion and storage, see [CloudWatch pricing](https://aws.amazon.com/cloudwatch/pricing/).
+
+## What I'd change for production
+
+This is a lab-scale network. For a production workload I would:
+
+- **One NAT gateway per AZ** with a route table per AZ, so outbound access survives an AZ impairment ([ADR 001](docs/adr/001-single-nat-gateway.md)).
+- **Remove SSH** from the web tier and the app-tier SSH rule and use SSM Session Manager only (the instance role already has SSM access).
+- **Restrict egress** on the security groups instead of allow-all, and add VPC endpoints (for example S3) so traffic to AWS services need not use the NAT gateway.
+- **Tighten the NACL ephemeral-port rules** ([ADR 002](docs/adr/002-security-groups-and-nacls.md)).
+- **Enable flow logs by default** and encrypt the log group with a KMS key.
+- **Remote state** with locking, and separate state per environment.
+- **Triage the Trivy report** in CI and make it a blocking gate.
+
+## Architecture decisions
+
+- [ADR 001 - one NAT gateway](docs/adr/001-single-nat-gateway.md)
+- [ADR 002 - security groups first, NACLs as backstop](docs/adr/002-security-groups-and-nacls.md)
+- [ADR 003 - credential-free plan tests](docs/adr/003-credential-free-plan-tests.md)
 
 ## Architecture diagram
 
